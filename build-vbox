@@ -4,8 +4,23 @@ set -e
 
 . "$(dirname $0)/config.sh"
 
-ISO="$NICKNAME-ubuntu-$VERSION-$DISTRO-$ARCH.iso"
-VBOX="$NICKNAME-ubuntu-$VERSION-$DISTRO-$ARCH"
+
+WORKDIR=./work
+ORIG_ISO=ubuntu-$VERSION-$DISTRO-$ARCH.iso
+COPY_NAME="ubuntu-$VERSION-$DISTRO-$ARCH"
+DEST_ISO="$NICKNAME-ubuntu-$VERSION-$DISTRO-$ARCH.iso"
+MOUNT="$WORKDIR/mount"
+mkdir -p $MOUNT
+
+ORIG="$WORKDIR/$ORIG_ISO"
+COPY="$WORKDIR/$COPY_NAME"
+ISO="$WORKDIR/$DEST_ISO"
+
+PLATFORM=$(uname)
+
+
+VBOX="VM-$NICKNAME-ubuntu-$VERSION-$DISTRO-$ARCH"
+pushd work
 
 # Create and configure a virtual machine through VirtualBox.
 VBoxManage createvm \
@@ -21,7 +36,6 @@ VBoxManage modifyvm "$VBOX" \
 	--cpus 1 \
 	--pae "$([ "$ARCH" = "i386" ] && echo on || echo off)" \
 	--hwvirtex on \
-	--hwvirtexexcl off \
 	--nestedpaging on \
 	--accelerate3d off \
 	--nic1 nat \
@@ -32,9 +46,11 @@ VBoxManage modifyvm "$VBOX" \
 	--vrde off \
 	--teleporter off
 
+	#--hwvirtexexcl off \
+
 # Mount a virtual hard disk.
 VBoxManage createhd \
-	--filename "$PWD/$VBOX/$VBOX.vmdk" \
+	--filename "$VBOX/$VBOX.vmdk" \
 	--size 40000 \
 	--format VMDK \
 	|| true
@@ -44,13 +60,13 @@ VBoxManage storagectl "$VBOX" \
 VBoxManage storageattach "$VBOX" \
 	--storagectl SATA \
 	--port 0 --device 0 \
-	--type hdd --medium "$PWD/$VBOX/$VBOX.vmdk"
+	--type hdd --medium "$VBOX/$VBOX.vmdk"
 
 # "Insert" install iso into virtual cd drive
 VBoxManage storageattach "$VBOX" \
        --storagectl SATA \
        --port 1 --device 0 \
-       --type dvddrive --medium "$PWD/$ISO"
+       --type dvddrive --medium "$DEST_ISO"
 
 
 # Start the virtual machine and the OS installation.  This will take
@@ -73,6 +89,17 @@ VBoxManage storageattach "$VBOX" \
 # Power up vm again.
 VBoxManage startvm "$VBOX" -- 
 
+while true ;  do
+  echo "Wait for SSH ready"
+  eval "$SSH \"pwd\""
+  RETVAL=$?
+  if [[ $RETVAL == 0 ]] ;
+  then
+    break
+  fi
+  sleep 2
+done
+set -x
 # Install guest additions.
 eval "$SSH \"
 	set -e
@@ -97,3 +124,4 @@ VBoxManage storageattach "$VBOX" \
         --storagectl SATA \
         --port 1 --device 0 \
         --type dvddrive --medium emptydrive
+popd

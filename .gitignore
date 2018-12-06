@@ -1,7 +1,6 @@
+.DS_Store
 *.swp
 *.iso
-mount
-ubuntu-*-server-*
-*-ubuntu-*-server-*
 *.box
 test*
+work/*

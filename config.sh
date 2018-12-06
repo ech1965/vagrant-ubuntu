@@ -4,12 +4,13 @@
 : ${NICKNAME:="vagrant"}
 
 # Arguments given to the download router.
-: ${VERSION:="12.04"}
+: ${VERSION:="18.04.1"}
 : ${DISTRO:="server"}
 : ${RELEASE:="latest"}
+: ${PROXY:="http://apt-cacher.phi8.ovh:9999"}
 
 # Architecture being built (i386 or amd64).
-: ${ARCH:="i386"}
+: ${ARCH:="amd64"}
 
 # Hardcoded host information.
 : ${HOST:="vagrant"}
@@ -19,9 +20,9 @@
 : ${PASSWORD:="vagrant"}
 
 # SSH key to be authorized in virtual machines.
-: ${PRIVATE_KEY:="vagrant"}
+: ${PRIVATE_KEY:="$HOME/.ssh/vagrantboxes.d/vagrant"}
 chmod 600 "$PRIVATE_KEY"
-: ${PUBLIC_KEY:="vagrant.pub"}
+: ${PUBLIC_KEY:="$HOME/.ssh/vagrantboxes.d/vagrant.pub"}
 
 # SSH command that will connect to the virtual machine.  Add commands
 # onto the end to do other tricks.

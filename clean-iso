@@ -3,12 +3,13 @@
 set -e
 
 . "$(dirname $0)/config.sh"
+WORKDIR=./work
+ORIG_ISO=ubuntu-$VERSION-$DISTRO-$ARCH.iso
+COPY_NAME="ubuntu-$VERSION-$DISTRO-$ARCH"
+DEST_ISO="$NICKNAME-ubuntu-$VERSION-$DISTRO-$ARCH.iso"
+MOUNT="$WORKDIR/mount"
 
-rm -f "$NICKNAME-ubuntu-$VERSION-$DISTRO-$ARCH.iso"
-{
-        sudo diskutil unmount "mount"
-        sudo /usr/libexec/vndevice detach /dev/vn0
-} || {
-        sudo umount "mount"
-        rm -rf "mount"
-}
+rm -f  $WORKDIR/$ORIG_ISO
+rm -f  $WORKDIR/$DEST_ISO
+rm -rf $WORKDIR/$COPY_NAME
+rmdir $MOUNT

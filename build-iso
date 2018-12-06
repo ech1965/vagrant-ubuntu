@@ -2,40 +2,51 @@
 
 set -e
 
+#set -x
+
 . "$(dirname $0)/config.sh"
 
-ORIG="ubuntu-$VERSION-$DISTRO-$ARCH.iso"
-COPY="ubuntu-$VERSION-$DISTRO-$ARCH"
-ISO="$NICKNAME-ubuntu-$VERSION-$DISTRO-$ARCH.iso"
+WORKDIR=./work
+ORIG_ISO=ubuntu-$VERSION-$DISTRO-$ARCH.iso
+COPY_NAME="ubuntu-$VERSION-$DISTRO-$ARCH"
+DEST_ISO="$NICKNAME-ubuntu-$VERSION-$DISTRO-$ARCH.iso"
+MOUNT="$WORKDIR/mount"
+mkdir -p $MOUNT
+
+ORIG="$WORKDIR/$ORIG_ISO"
+COPY="$WORKDIR/$COPY_NAME"
+ISO="$WORKDIR/$DEST_ISO"
+
+PLATFORM=$(uname)
 
 # Download the original ISO if it isn't present already.
 [ -f "$ORIG" ] || curl -L -o "$ORIG" \
-	-d distro="$DISTRO" \
-	-d release="$RELEASE" \
-	-d bits="$([ "$ARCH" = "i386" ] && echo 32 || echo 64)" \
-	"http://www.ubuntu.com/start-download"
+	"http://cdimage.ubuntu.com/releases/$VERSION/release/ubuntu-18.04.1-server-amd64.iso"
 
-# Make a writable copy of the original ISO.
-{
-	# os x
-	sudo /usr/libexec/vndevice attach /dev/vn0 "$ORIG"
-	sudo mount -t cd9660 /dev/vn0 "mount"
-} || {
-	# linux
-	rm -rf "mount"
-	mkdir "mount"
-	sudo mount -o loop "$ORIG" "mount"
-}
-rsync -a "mount/" "$COPY"
-{
-	sudo diskutil unmount "mount"
-	sudo /usr/libexec/vndevice detach /dev/vn0
-} || {
-	sudo umount "mount"
-	rm -rf "mount"
-}
+echo http://releases.ubuntu.com/18.04.1/ubuntu-18.04.1-live-server-amd64.iso
+
+echo Mounting ISO
+if [[ "$PLATFORM" == "Darwin" ]]; then
+        # os x
+        DEVNODE=$(sudo hdiutil attach -nomount "$ORIG" | head -1 | awk "{print \$1}")
+        sudo mount -t cd9660 "$DEVNODE" "$MOUNT"
+else
+        # linux
+        sudo mount -o loop "$ORIG" "$MOUNT"
+fi
+
+
+echo Syncing files from ISO
+rsync -a "$MOUNT/" "$COPY"
+
+echo Unmounting ISO
+sudo umount "$MOUNT"
+
+if [[ "$PLATFORM" == "Darwin" ]]; then
+        sudo hdiutil eject "$DEVNODE"
+fi
+rm -rf "$MOUNT"
 chmod -R +w "$COPY"
-
 # Customize the writable copy.
 cp "isolinux.cfg" "$COPY/isolinux/"
 m4 \
@@ -48,11 +59,15 @@ m4 \
 	-D __ROOT_PASSWORD__="$ROOT_PASSWORD" \
 	-D __USERNAME__="$USERNAME" \
 	-D __PASSWORD__="$PASSWORD" \
+	-D __PROXY__="$PROXY" \
 	"unattended.seed.m4" >"$COPY/preseed/unattended.seed"
-cp "$PUBLIC_KEY" "sudoers" "$COPY/"
+m4 \
+        -D __USERNAME__="$USERNAME" \
+        vagrantnopasswd.m4 > "$COPY/vagrantnopasswd"
+cp "$PUBLIC_KEY"  "$COPY/"
 m4 \
 	-D __USERNAME__="$USERNAME" \
-	-D __PUBLIC_KEY__="$PUBLIC_KEY" \
+	-D __PUBLIC_KEY__="$(basename $PUBLIC_KEY)" \
 	"late_command.sh.m4" >"$COPY/late_command.sh"
 
 # Build a custom ISO.

@@ -36,7 +36,7 @@ d-i user-setup/allow-password-weak boolean true
 d-i user-setup/encrypt-home boolean false
 
 # Packages and repositories.
-d-i mirror/http/proxy string
+d-i mirror/http/proxy string __PROXY__
 tasksel tasksel/first multiselect
 d-i pkgsel/include string curl openssh-server
 d-i pkgsel/update-policy select none
