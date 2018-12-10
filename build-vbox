@@ -21,7 +21,8 @@ PLATFORM=$(uname)
 
 VBOX="VM-$NICKNAME-ubuntu-$VERSION-$DISTRO-$ARCH"
 pushd work
-
+function step_1()
+{
 # Create and configure a virtual machine through VirtualBox.
 VBoxManage createvm \
 	--name "$VBOX" \
@@ -85,21 +86,49 @@ VBoxManage storageattach "$VBOX" \
 	--storagectl SATA \
 	--port 1 --device 0 \
 	--type dvddrive --medium "$VBOX_GUEST_ADDITIONS"
+}
 
-# Power up vm again.
-VBoxManage startvm "$VBOX" -- 
 
+
+function wait_for_ssh_ready()
+{
+set +e
 while true ;  do
   echo "Wait for SSH ready"
-  eval "$SSH \"pwd\""
+  eval "$SSH \"pwd\" "
   RETVAL=$?
+  echo $RETVAL
   if [[ $RETVAL == 0 ]] ;
   then
     break
   fi
   sleep 2
 done
-set -x
+set -e
+
+}
+
+function wait_for_vm_down()
+{
+
+until VBoxManage showvminfo "$VBOX" | grep "^State: *powered off"
+do
+	sleep 1
+done
+
+}
+
+
+step_1
+
+
+
+# Power up vm again.
+VBoxManage startvm "$VBOX" --
+
+wait_for_ssh_ready
+
+set +e
 # Install guest additions.
 eval "$SSH \"
 	set -e
@@ -109,19 +138,22 @@ eval "$SSH \"
 		sleep 1
 	done
 	sudo /media/cdrom/VBoxLinuxAdditions.run
-	sudo umount /media/cdrom
 \""
 
-# Shutdown the virtual machine.
-eval "$SSH \"sudo shutdown -h now\""
-until VBoxManage showvminfo "$VBOX" | grep "^State: *powered off"
-do
-	sleep 1
-done
+echo "Shutting Down"
+eval "$SSH \"
+	sudo umount /media/cdrom
+	sleep 5
+	sudo poweroff
+\""
+
+wait_for_vm_down
 
 # Remove guest additions cd.
 VBoxManage storageattach "$VBOX" \
         --storagectl SATA \
         --port 1 --device 0 \
         --type dvddrive --medium emptydrive
+
+
 popd

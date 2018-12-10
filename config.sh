@@ -28,6 +28,7 @@ chmod 600 "$PRIVATE_KEY"
 # onto the end to do other tricks.
 : ${SSH_PORT:="22222"}
 : ${SSH:="ssh \
+    -o ConnectTimeout=5 \
 	-o UserKnownHostsFile=/dev/null \
 	-o StrictHostKeyChecking=no \
 	-l \"$USERNAME\" -i \"$PRIVATE_KEY\" -p \"$SSH_PORT\" localhost \
