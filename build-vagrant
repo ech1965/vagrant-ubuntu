@@ -8,7 +8,7 @@ WORKDIR=./work
 ORIG_ISO=ubuntu-$VERSION-$DISTRO-$ARCH.iso
 COPY_NAME="ubuntu-$VERSION-$DISTRO-$ARCH"
 DEST_ISO="$NICKNAME-ubuntu-$VERSION-$DISTRO-$ARCH.iso"
-BOX_NAME="$NICKNAME-bionic-$DISTRO-$ARCH"
+BOX_NAME="$NICKNAME-bionic-$DISTRO"
 VBOX="VM-$NICKNAME-ubuntu-$VERSION-$DISTRO-$ARCH"
 MOUNT="$WORKDIR/mount"
 ORIG="$WORKDIR/$ORIG_ISO"
@@ -64,6 +64,7 @@ mv "package.box" \
 	"$WORKDIR/$BOX_NAME.box"
 
 echo "Successfully built vagrant box!"
+vagrant box add --force --name $BOX_NAME $WORKDIR/$BOX_NAME.box
 
 # Creating Vagrant boxes ruins the normal VM setup so get rid of them.
 eval "$(dirname $0)/clean-vbox"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
-./build-iso
-./build-vbox
-./build-vagrant
+time ./build-iso
+time ./build-vbox
+time ./build-vagrant
 
