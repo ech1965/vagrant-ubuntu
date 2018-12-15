@@ -4,4 +4,5 @@ set -e
 
 . "$(dirname $0)/config.sh"
 
-rm -f "$NICKNAME$([ "$ARCH" = "i386" ] && echo 32 || echo 64).box"
+BOX_NAME="$NICKNAME-bionic-$DISTRO-$ARCH"
+rm -f "$BOX_NAME"
