@@ -1,7 +1,7 @@
 #
 
 # The nickname of this ISO, VirtualBox image, and Vagrant box.
-: ${NICKNAME:="vagrant"}
+: ${NICKNAME:="tdm"}
 
 # Arguments given to the download router.
 : ${VERSION:="18.04.1"}

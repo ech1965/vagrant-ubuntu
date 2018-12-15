@@ -9,18 +9,17 @@ WORKDIR=./work
 ORIG_ISO=ubuntu-$VERSION-$DISTRO-$ARCH.iso
 COPY_NAME="ubuntu-$VERSION-$DISTRO-$ARCH"
 DEST_ISO="$NICKNAME-ubuntu-$VERSION-$DISTRO-$ARCH.iso"
+VBOX="VM-$NICKNAME-ubuntu-$VERSION-$DISTRO-$ARCH"
 MOUNT="$WORKDIR/mount"
-mkdir -p $MOUNT
-
 ORIG="$WORKDIR/$ORIG_ISO"
 COPY="$WORKDIR/$COPY_NAME"
 ISO="$WORKDIR/$DEST_ISO"
-
 PLATFORM=$(uname)
 
 
-VBOX="VM-$NICKNAME-ubuntu-$VERSION-$DISTRO-$ARCH"
-pushd work
+mkdir -p $MOUNT
+pushd $WORKDIR
+
 function step_1()
 {
 # Create and configure a virtual machine through VirtualBox.
@@ -29,6 +28,7 @@ VBoxManage createvm \
 	--basefolder "$PWD" \
 	--register \
 	|| true
+
 VBoxManage modifyvm "$VBOX" \
 	--ostype "Ubuntu$([ "$ARCH" = "i386" ] || echo _64)" \
 	--memory 360 \
@@ -46,8 +46,6 @@ VBoxManage modifyvm "$VBOX" \
 	--usb off --usbehci off \
 	--vrde off \
 	--teleporter off
-
-	#--hwvirtexexcl off \
 
 # Mount a virtual hard disk.
 VBoxManage createhd \
@@ -92,20 +90,19 @@ VBoxManage storageattach "$VBOX" \
 
 function wait_for_ssh_ready()
 {
-set +e
-while true ;  do
-  echo "Wait for SSH ready"
-  eval "$SSH \"pwd\" "
-  RETVAL=$?
-  echo $RETVAL
-  if [[ $RETVAL == 0 ]] ;
-  then
-    break
-  fi
-  sleep 2
-done
-set -e
-
+    set +e
+    while true ;  do
+        echo "Wait for SSH ready"
+        eval "$SSH \"pwd\" "
+        RETVAL=$?
+        echo $RETVAL
+        if [[ $RETVAL == 0 ]] ;
+        then
+            break
+        fi
+        sleep 2
+    done
+    set -e
 }
 
 function wait_for_vm_down()
@@ -113,7 +110,7 @@ function wait_for_vm_down()
 
 until VBoxManage showvminfo "$VBOX" | grep "^State: *powered off"
 do
-	sleep 1
+	sleep 3
 done
 
 }
