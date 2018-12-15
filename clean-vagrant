@@ -4,5 +4,7 @@ set -e
 
 . "$(dirname $0)/config.sh"
 
+
+WORKDIR=./work
 BOX_NAME="$NICKNAME-bionic-$DISTRO-$ARCH"
-rm -f "$BOX_NAME"
+rm -f "$WORKDIR/$BOX_NAME"
