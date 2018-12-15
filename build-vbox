@@ -18,7 +18,7 @@ PLATFORM=$(uname)
 
 
 mkdir -p $MOUNT
-pushd $WORKDIR
+pushd $WORKDIR >/dev/null
 
 function step_1()
 {

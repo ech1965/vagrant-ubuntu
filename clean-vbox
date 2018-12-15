@@ -11,14 +11,14 @@ VBOX="VM-$NICKNAME-ubuntu-$VERSION-$DISTRO-$ARCH"
 
 MOUNT="$WORKDIR/mount"
 
-set -x
-pushd $WORKDIR
+pushd $WORKDIR >/dev/null
   VBoxManage controlvm "$VBOX" poweroff || true
   VBoxManage storagectl "$VBOX" --name SATA --remove
   VBoxManage unregistervm "$VBOX"
   VBoxManage closemedium dvd "./$DEST_ISO"
   VBoxManage closemedium disk "./$VBOX/$VBOX.vmdk"
   rm -rf "$VBOX"
-popd
+popd >/dev/null
+
 
 
